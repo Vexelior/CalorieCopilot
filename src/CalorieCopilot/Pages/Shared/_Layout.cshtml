@@ -1,0 +1,105 @@
+@inject SignInManager<AppUser> SignInManager
+@{
+    var signedIn = SignInManager.IsSignedIn(User);
+    var path = Context.Request.Path.Value ?? "/";
+    string Active(string prefix) => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#198754" />
+    <title>@ViewData["Title"] · CalorieCopilot</title>
+    <script>
+        // Apply the saved/OS color theme before first paint to avoid a flash.
+        (function () {
+            let t = null;
+            try { t = localStorage.getItem('cc-theme'); } catch (e) { }
+            if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body class="@(signedIn ? "has-tabbar" : "")">
+    <nav class="navbar navbar-expand-md border-bottom bg-body sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" asp-page="/Index">
+                <span class="brand-mark"><i class="bi bi-fire"></i></span> CalorieCopilot
+            </a>
+            <div class="d-flex align-items-center gap-1 order-md-last">
+                <button type="button" class="btn btn-link nav-link px-2" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+                @if (signedIn)
+                {
+                    <form method="post" asp-page="/Account/Logout" class="d-none d-md-block">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-right"></i> Sign out</button>
+                    </form>
+                }
+            </div>
+            @if (signedIn)
+            {
+                <ul class="navbar-nav me-auto ms-md-4 d-none d-md-flex">
+                    <li class="nav-item"><a class="nav-link @Active("/Diary")" asp-page="/Diary"><i class="bi bi-journal-text"></i> Diary</a></li>
+                    <li class="nav-item"><a class="nav-link @Active("/Scan")" asp-page="/Scan"><i class="bi bi-upc-scan"></i> Scan</a></li>
+                    <li class="nav-item"><a class="nav-link @Active("/Analytics")" asp-page="/Analytics"><i class="bi bi-graph-up"></i> Analytics</a></li>
+                    <li class="nav-item"><a class="nav-link @Active("/Profile")" asp-page="/Profile"><i class="bi bi-person-circle"></i> Profile</a></li>
+                </ul>
+            }
+            else
+            {
+                <div class="ms-auto d-flex gap-2 me-1">
+                    <a class="btn btn-outline-success btn-sm" asp-page="/Account/Login">Sign in</a>
+                    <a class="btn btn-success btn-sm" asp-page="/Account/Register">Get started</a>
+                </div>
+            }
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        @if (TempData["Success"] is string ok)
+        {
+            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                <i class="bi bi-check-circle-fill"></i><div>@ok</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] is string err)
+        {
+            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i><div>@err</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @RenderBody()
+    </main>
+
+    @if (signedIn)
+    {
+        <nav class="tabbar d-md-none border-top bg-body" aria-label="Primary">
+            <a class="@Active("/Diary")" asp-page="/Diary"><i class="bi bi-journal-text"></i><span>Diary</span></a>
+            <a class="@Active("/Scan") tabbar-scan" asp-page="/Scan"><i class="bi bi-upc-scan"></i><span>Scan</span></a>
+            <a class="@Active("/Analytics")" asp-page="/Analytics"><i class="bi bi-graph-up"></i><span>Analytics</span></a>
+            <a class="@Active("/Profile")" asp-page="/Profile"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+        </nav>
+    }
+    else
+    {
+        <footer class="border-top py-4 text-body-secondary small">
+            <div class="container d-flex flex-wrap justify-content-between gap-2">
+                <span>&copy; @DateTime.UtcNow.Year CalorieCopilot</span>
+                <span>Product data from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a> (ODbL)</span>
+            </div>
+        </footer>
+    }
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

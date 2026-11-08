@@ -1,0 +1,153 @@
+@page
+@model ScanModel
+@{
+    ViewData["Title"] = "Scan barcode";
+}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0">Scan a barcode</h1>
+        <div class="text-body-secondary">Point your camera at the barcode on the package.</div>
+    </div>
+    <a asp-page="/Diary" asp-route-date="@Model.Input.Date.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary d-none d-sm-inline-block"><i class="bi bi-arrow-left"></i> Diary</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-3">
+            <div class="scanner-frame w-100">
+                <div id="reader"></div>
+                <div class="scanner-overlay d-none" id="scanner-overlay"><div class="target"></div><div class="laser"></div></div>
+                <div class="scanner-idle" id="scanner-idle">
+                    <i class="bi bi-camera-video fs-1"></i>
+                    <button type="button" class="btn btn-success btn-lg" id="start-scan"><i class="bi bi-upc-scan"></i> Start camera</button>
+                    <small class="text-white-50 px-4">Camera access needs HTTPS (or localhost). Nothing is recorded or uploaded.</small>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary d-none" id="stop-scan"><i class="bi bi-stop-circle"></i> Stop</button>
+                <button type="button" class="btn btn-outline-secondary d-none" id="switch-camera"><i class="bi bi-arrow-repeat"></i> Switch camera</button>
+                <button type="button" class="btn btn-outline-secondary d-none" id="torch"><i class="bi bi-lightbulb"></i> Torch</button>
+                <label class="btn btn-outline-secondary mb-0 ms-auto">
+                    <i class="bi bi-image"></i> Scan from photo
+                    <input type="file" accept="image/*" capture="environment" id="scan-file" class="d-none" />
+                </label>
+            </div>
+            <div class="text-danger small mt-2" id="scan-error" role="alert"></div>
+            <hr />
+            <form id="manual-form" class="input-group" autocomplete="off">
+                <span class="input-group-text"><i class="bi bi-upc"></i></span>
+                <input type="text" inputmode="numeric" pattern="\d{6,14}" class="form-control" id="manual-code" placeholder="Or type the barcode number" aria-label="Barcode number" required />
+                <button class="btn btn-success" type="submit">Look up</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card p-4 text-center text-body-secondary" id="result-empty">
+            <i class="bi bi-upc-scan display-4 mb-2"></i>
+            <p class="mb-0">Scan a product to see its nutrition facts here.</p>
+        </div>
+
+        <div class="card p-4 text-center d-none" id="result-loading">
+            <div class="spinner-border text-success mx-auto mb-2" role="status"></div>
+            <div>Looking up <span class="fw-semibold" id="loading-code"></span>…</div>
+        </div>
+
+        <form method="post" class="card d-none" id="result-form">
+            <div class="card-body">
+                <div class="d-flex gap-3 align-items-center mb-3" id="product-header">
+                    <img id="product-image" class="product-thumb border d-none" alt="" referrerpolicy="no-referrer" />
+                    <div class="min-w-0">
+                        <div class="small text-body-secondary"><i class="bi bi-upc"></i> <span id="product-code"></span> <span id="product-source" class="badge text-bg-light border ms-1"></span></div>
+                        <div class="fw-semibold fs-5 text-truncate" id="product-title"></div>
+                    </div>
+                </div>
+                <div class="alert alert-warning small d-none" id="not-found">
+                    <i class="bi bi-question-circle"></i> This product isn't in the database yet. Enter its nutrition label below. We'll remember it for your next scan.
+                </div>
+
+                <input type="hidden" asp-for="Input.Barcode" />
+                <input type="hidden" name="Input.Date" value="@Model.Input.Date.ToString("yyyy-MM-dd")" />
+                <div class="row g-3">
+                    <div class="col-sm-7">
+                        <label asp-for="Input.Name" class="form-label">Food</label>
+                        <input asp-for="Input.Name" class="form-control" required maxlength="120" />
+                    </div>
+                    <div class="col-sm-5">
+                        <label asp-for="Input.Brand" class="form-label">Brand</label>
+                        <input asp-for="Input.Brand" class="form-control" maxlength="80" />
+                    </div>
+
+                    <div class="col-12 d-none" id="basis-group">
+                        <div class="form-label mb-1">Measure by</div>
+                        <div class="btn-group w-100" role="group" aria-label="Nutrition basis">
+                            <input type="radio" class="btn-check" name="basis" id="basis-serving" value="serving" />
+                            <label class="btn btn-outline-success" for="basis-serving">Serving <span class="small" id="basis-serving-label"></span></label>
+                            <input type="radio" class="btn-check" name="basis" id="basis-100g" value="100g" />
+                            <label class="btn btn-outline-success" for="basis-100g">Per 100 g</label>
+                        </div>
+                    </div>
+
+                    <div class="col-7">
+                        <label asp-for="Input.ServingDescription" class="form-label"></label>
+                        <input asp-for="Input.ServingDescription" class="form-control" placeholder="e.g. 1 bar (40 g)" maxlength="60" />
+                    </div>
+                    <div class="col-5">
+                        <label asp-for="Input.Servings" class="form-label">Servings</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" data-step="-0.5" aria-label="Fewer"><i class="bi bi-dash"></i></button>
+                            <input asp-for="Input.Servings" class="form-control text-center" type="number" step="any" min="0.01" max="100" required />
+                            <button class="btn btn-outline-secondary" type="button" data-step="0.5" aria-label="More"><i class="bi bi-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="col-12"><div class="small text-body-secondary">Nutrition per serving</div></div>
+                    <div class="col-6 col-sm-3">
+                        <label asp-for="Input.Calories" class="form-label small">kcal</label>
+                        <input asp-for="Input.Calories" class="form-control" type="number" step="any" min="0" max="10000" required />
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <label asp-for="Input.ProteinG" class="form-label small"><span class="swatch bg-protein"></span>Protein g</label>
+                        <input asp-for="Input.ProteinG" class="form-control" type="number" step="any" min="0" max="1000" />
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <label asp-for="Input.CarbsG" class="form-label small"><span class="swatch bg-carbs"></span>Carbs g</label>
+                        <input asp-for="Input.CarbsG" class="form-control" type="number" step="any" min="0" max="1000" />
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <label asp-for="Input.FatG" class="form-label small"><span class="swatch bg-fat"></span>Fat g</label>
+                        <input asp-for="Input.FatG" class="form-control" type="number" step="any" min="0" max="1000" />
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label asp-for="Input.Meal" class="form-label">Meal</label>
+                        <select asp-for="Input.Meal" class="form-select">
+                            @foreach (var m in Enum.GetValues<Meal>())
+                            {
+                                <option value="@m" selected="@(m == Model.Input.Meal)">@m</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6 d-flex align-items-end">
+                        <div class="form-check d-none" id="save-product-group">
+                            <input class="form-check-input" type="checkbox" asp-for="SaveProduct" />
+                            <label class="form-check-label" asp-for="SaveProduct">Remember this product</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent d-flex align-items-center justify-content-between py-3">
+                <div><span class="text-body-secondary small">Total</span> <span class="fs-4 fw-bold" id="scan-total">0</span> <span class="text-body-secondary">kcal</span></div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary" id="scan-again"><i class="bi bi-arrow-counterclockwise"></i> Rescan</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-plus-lg"></i> Add to diary</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/html5-qrcode/html5-qrcode.min.js"></script>
+    <script src="~/js/scan.js" asp-append-version="true"></script>
+}
