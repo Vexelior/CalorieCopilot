@@ -1,0 +1,72 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Track calories effortlessly";
+}
+<section class="hero">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+            <span class="badge rounded-pill text-bg-success-subtle text-success-emphasis mb-3"><i class="bi bi-stars"></i> Free and private</span>
+            <h1 class="display-5 mb-3">Your copilot for <span class="text-success">daily nutrition</span>.</h1>
+            <p class="lead text-body-secondary mb-4">
+                Log meals in seconds, scan barcodes with your phone's camera, and see how your habits trend over time.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-page="/Account/Register" class="btn btn-success btn-lg px-4"><i class="bi bi-person-plus"></i> Create free account</a>
+                <a asp-page="/Account/Login" class="btn btn-outline-secondary btn-lg px-4">Sign in</a>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card p-4">
+                <div class="d-flex align-items-center gap-4">
+                    <div class="ring" aria-hidden="true">
+                        <svg width="168" height="168" viewBox="0 0 168 168">
+                            <circle class="track" cx="84" cy="84" r="72" fill="none" stroke-width="14" />
+                            <circle class="value" cx="84" cy="84" r="72" fill="none" stroke-width="14" stroke-dasharray="452.4" stroke-dashoffset="140" />
+                        </svg>
+                        <div class="label"><div class="big">1,420</div><div class="small text-body-secondary">of 2,000 kcal</div></div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="small mb-1"><span class="swatch bg-protein"></span>Protein <span class="float-end text-body-secondary">96 / 150 g</span></div>
+                        <div class="macro-bar mb-3"><span class="bg-protein" style="width:64%"></span></div>
+                        <div class="small mb-1"><span class="swatch bg-carbs"></span>Carbs <span class="float-end text-body-secondary">150 / 200 g</span></div>
+                        <div class="macro-bar mb-3"><span class="bg-carbs" style="width:75%"></span></div>
+                        <div class="small mb-1"><span class="swatch bg-fat"></span>Fat <span class="float-end text-body-secondary">44 / 67 g</span></div>
+                        <div class="macro-bar"><span class="bg-fat" style="width:66%"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4 py-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 p-4">
+            <div class="feature-icon bg-success-subtle text-success mb-3"><i class="bi bi-journal-check"></i></div>
+            <h2 class="h5">Daily diary</h2>
+            <p class="text-body-secondary mb-0">Log breakfast, lunch, dinner and snacks, and watch your calories and macros against your goals.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 p-4">
+            <div class="feature-icon bg-primary-subtle text-primary mb-3"><i class="bi bi-upc-scan"></i></div>
+            <h2 class="h5">Barcode scanning</h2>
+            <p class="text-body-secondary mb-0">Point your camera at a package and its nutrition facts fill in automatically from Open Food Facts.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 p-4">
+            <div class="feature-icon bg-warning-subtle text-warning-emphasis mb-3"><i class="bi bi-graph-up-arrow"></i></div>
+            <h2 class="h5">Analytics</h2>
+            <p class="text-body-secondary mb-0">Trends, streaks, macro split, meal breakdown and weight history over 7, 30 or 90 days.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 p-4">
+            <div class="feature-icon bg-info-subtle text-info-emphasis mb-3"><i class="bi bi-sliders"></i></div>
+            <h2 class="h5">Personal goals</h2>
+            <p class="text-body-secondary mb-0">Get calorie and macro targets suggested from your body stats and activity level, or set your own.</p>
+        </div>
+    </div>
+</section>

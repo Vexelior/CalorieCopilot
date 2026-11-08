@@ -1,0 +1,251 @@
+@page
+@model ProfileModel
+@{
+    ViewData["Title"] = "Profile";
+    var u = Model.CurrentUser;
+    var s = Model.Suggestion;
+    var initials = string.Concat(u.FriendlyName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div class="rounded-circle bg-success text-white d-grid fw-bold fs-4" style="width:3.5rem;height:3.5rem;place-items:center">@initials</div>
+    <div class="min-w-0">
+        <h1 class="h3 mb-0 text-truncate">@u.FriendlyName</h1>
+        <div class="text-body-secondary small text-truncate">@u.Email · Member since @u.CreatedAt.ToString("MMMM yyyy")</div>
+    </div>
+    <form method="post" asp-page="/Account/Logout" class="ms-auto d-md-none">
+        <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-right"></i> Sign out</button>
+    </form>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <!-- Daily targets -->
+        <div class="card mb-4" id="targets">
+            <div class="card-header py-3 fw-semibold"><i class="bi bi-bullseye text-success"></i> Daily targets</div>
+            <div class="card-body">
+                @if (s is not null)
+                {
+                    <div class="alert alert-success-subtle border border-success-subtle bg-success-subtle d-flex flex-wrap align-items-center gap-3 py-2">
+                        <i class="bi bi-magic fs-4 text-success"></i>
+                        <div class="flex-grow-1 small">
+                            <div class="fw-semibold">Suggested: @s.Calories.ToString("N0") kcal · P @s.ProteinG g · C @s.CarbsG g · F @s.FatG g</div>
+                            <div class="text-body-secondary">BMR @s.Bmr.ToString("N0") kcal · maintenance about @s.Tdee.ToString("N0") kcal (Mifflin-St Jeor)</div>
+                        </div>
+                        <form method="post" asp-page-handler="ApplySuggestion">
+                            <button type="submit" class="btn btn-sm btn-success">Apply</button>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-light border small py-2"><i class="bi bi-info-circle"></i> Fill in your body details below to get personalised target suggestions.</div>
+                }
+                <form method="post" asp-page-handler="Targets" class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Targets.DailyCalorieGoal" class="form-label"></label>
+                        <div class="input-group">
+                            <input asp-for="Targets.DailyCalorieGoal" type="number" min="800" max="10000" step="10" class="form-control" required />
+                            <span class="input-group-text">kcal</span>
+                        </div>
+                        <span asp-validation-for="Targets.DailyCalorieGoal" class="text-danger small"></span>
+                    </div>
+                    <div class="col-4">
+                        <label asp-for="Targets.ProteinGoalG" class="form-label small"><span class="swatch bg-protein"></span>Protein g</label>
+                        <input asp-for="Targets.ProteinGoalG" type="number" min="0" max="1000" class="form-control" />
+                    </div>
+                    <div class="col-4">
+                        <label asp-for="Targets.CarbsGoalG" class="form-label small"><span class="swatch bg-carbs"></span>Carbs g</label>
+                        <input asp-for="Targets.CarbsGoalG" type="number" min="0" max="2000" class="form-control" />
+                    </div>
+                    <div class="col-4">
+                        <label asp-for="Targets.FatGoalG" class="form-label small"><span class="swatch bg-fat"></span>Fat g</label>
+                        <input asp-for="Targets.FatGoalG" type="number" min="0" max="1000" class="form-control" />
+                    </div>
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                        <span class="small text-body-secondary" id="macro-kcal"></span>
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Save targets</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="card mb-4" id="body">
+            <div class="card-header py-3 fw-semibold"><i class="bi bi-person-arms-up text-success"></i> Body &amp; goal</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Body" class="row g-3">
+                    <div class="col-sm-6">
+                        <label asp-for="Body.Sex" class="form-label">Sex</label>
+                        <select asp-for="Body.Sex" class="form-select">
+                            <option value="">Prefer not to say</option>
+                            <option value="Female" selected="@(Model.Body.Sex == Sex.Female)">Female</option>
+                            <option value="Male" selected="@(Model.Body.Sex == Sex.Male)">Male</option>
+                        </select>
+                        <div class="form-text">Used only to estimate your energy needs.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="Body.BirthDate" class="form-label"></label>
+                        <input name="Body.BirthDate" id="Body_BirthDate" type="date" class="form-control" value="@Model.Body.BirthDate?.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="Body.BirthDate" class="text-danger small"></span>
+                    </div>
+                    @if (u.UseMetric)
+                    {
+                        <div class="col-sm-6">
+                            <label asp-for="Body.HeightCm" class="form-label">Height</label>
+                            <div class="input-group">
+                                <input asp-for="Body.HeightCm" type="number" step="0.1" min="50" max="260" class="form-control" />
+                                <span class="input-group-text">cm</span>
+                            </div>
+                            <span asp-validation-for="Body.HeightCm" class="text-danger small"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-sm-6">
+                            <label class="form-label" for="Body_HeightFt">Height</label>
+                            <div class="input-group">
+                                <input asp-for="Body.HeightFt" type="number" min="2" max="8" class="form-control" aria-label="Feet" />
+                                <span class="input-group-text">ft</span>
+                                <input asp-for="Body.HeightIn" type="number" step="0.5" min="0" max="11.9" class="form-control" aria-label="Inches" />
+                                <span class="input-group-text">in</span>
+                            </div>
+                            <span asp-validation-for="Body.HeightFt" class="text-danger small"></span>
+                        </div>
+                    }
+                    <div class="col-sm-6">
+                        <label asp-for="Body.Weight" class="form-label">Current weight</label>
+                        <div class="input-group">
+                            <input asp-for="Body.Weight" type="number" step="0.1" min="20" max="1000" class="form-control" />
+                            <span class="input-group-text">@(u.UseMetric ? "kg" : "lb")</span>
+                        </div>
+                        <span asp-validation-for="Body.Weight" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="Body.ActivityLevel" class="form-label"></label>
+                        <select asp-for="Body.ActivityLevel" class="form-select">
+                            @foreach (var a in Enum.GetValues<ActivityLevel>())
+                            {
+                                <option value="@a" selected="@(a == Model.Body.ActivityLevel)">@ProfileModel.Describe(a)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="Body.WeightGoal" class="form-label"></label>
+                        <select asp-for="Body.WeightGoal" class="form-select">
+                            @foreach (var g in Enum.GetValues<WeightGoal>())
+                            {
+                                <option value="@g" selected="@(g == Model.Body.WeightGoal)">@ProfileModel.Describe(g)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Save body details</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <!-- Account -->
+        <div class="card mb-4" id="account">
+            <div class="card-header py-3 fw-semibold"><i class="bi bi-person-gear text-success"></i> Account</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Account" class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Account.DisplayName" class="form-label"></label>
+                        <input asp-for="Account.DisplayName" class="form-control" autocomplete="name" />
+                        <span asp-validation-for="Account.DisplayName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Account.Email" class="form-label"></label>
+                        <input asp-for="Account.Email" class="form-control" autocomplete="email" />
+                        <span asp-validation-for="Account.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Account.TimeZone" class="form-label"></label>
+                        <select asp-for="Account.TimeZone" class="form-select">
+                            @foreach (var tz in Model.TimeZones)
+                            {
+                                <option value="@tz" selected="@(tz == Model.Account.TimeZone)">@tz.Replace('_', ' ')</option>
+                            }
+                        </select>
+                        <div class="form-text">Decides when your "today" starts.</div>
+                        <span asp-validation-for="Account.TimeZone" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-label">Units</div>
+                        <div class="btn-group w-100" role="group" aria-label="Units">
+                            <input type="radio" class="btn-check" name="Account.UseMetric" id="units-metric" value="true" checked="@Model.Account.UseMetric" />
+                            <label class="btn btn-outline-success" for="units-metric">Metric (kg, cm)</label>
+                            <input type="radio" class="btn-check" name="Account.UseMetric" id="units-imperial" value="false" checked="@(!Model.Account.UseMetric)" />
+                            <label class="btn btn-outline-success" for="units-imperial">Imperial (lb, ft)</label>
+                        </div>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Save account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password -->
+        <div class="card mb-4" id="security">
+            <div class="card-header py-3 fw-semibold"><i class="bi bi-shield-lock text-success"></i> Change password</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Password" class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Password.CurrentPassword" class="form-label"></label>
+                        <input asp-for="Password.CurrentPassword" class="form-control" autocomplete="current-password" value="" />
+                        <span asp-validation-for="Password.CurrentPassword" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Password.NewPassword" class="form-label"></label>
+                        <input asp-for="Password.NewPassword" class="form-control" autocomplete="new-password" value="" />
+                        <span asp-validation-for="Password.NewPassword" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Password.ConfirmPassword" class="form-label"></label>
+                        <input asp-for="Password.ConfirmPassword" class="form-control" autocomplete="new-password" value="" />
+                        <span asp-validation-for="Password.ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-outline-success"><i class="bi bi-key"></i> Update password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="card border border-danger-subtle">
+            <div class="card-header py-3 fw-semibold text-danger"><i class="bi bi-exclamation-octagon"></i> Delete account</div>
+            <div class="card-body">
+                <p class="small text-body-secondary">Permanently deletes your account, diary, weigh-ins and saved products. This cannot be undone.</p>
+                <form method="post" asp-page-handler="Delete" class="d-flex gap-2" data-confirm="Delete your account and all of your data permanently?">
+                    <input type="password" name="deletePassword" class="form-control" placeholder="Confirm with your password" autocomplete="current-password" required aria-label="Password" />
+                    <button type="submit" class="btn btn-danger text-nowrap"><i class="bi bi-trash"></i> Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Show how the macro targets add up versus the calorie target.
+        (function () {
+            const v = (id) => parseFloat(document.getElementById(id).value) || 0;
+            const out = document.getElementById('macro-kcal');
+            const update = () => {
+                const kcal = v('Targets_ProteinGoalG') * 4 + v('Targets_CarbsGoalG') * 4 + v('Targets_FatGoalG') * 9;
+                const goal = v('Targets_DailyCalorieGoal');
+                const diff = Math.round(kcal - goal);
+                out.textContent = `Macros add up to ${Math.round(kcal).toLocaleString()} kcal` + (goal && Math.abs(diff) > 50 ? ` (${diff > 0 ? '+' : ''}${diff.toLocaleString()} vs. target)` : '');
+            };
+            ['Targets_ProteinGoalG', 'Targets_CarbsGoalG', 'Targets_FatGoalG', 'Targets_DailyCalorieGoal']
+                .forEach((id) => document.getElementById(id).addEventListener('input', update));
+            update();
+        })();
+    </script>
+}
