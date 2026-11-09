@@ -1,7 +1,7 @@
 # CalorieCopilot
 
-A calorie-tracking web app built with **ASP.NET Core (.NET 10) Razor Pages**, **ASP.NET Core Identity**, **Turso** (libSQL),
-**Bootstrap 5** and **Bootstrap Icons**.
+A calorie-tracking web app built with **Next.js 16 (App Router) and TypeScript**, **Turso** (libSQL), **Bootstrap 5** and
+**Bootstrap Icons**. It's designed to deploy to **Vercel**.
 
 ## Features
 
@@ -12,11 +12,100 @@ A calorie-tracking web app built with **ASP.NET Core (.NET 10) Razor Pages**, **
 | **Analytics** | 7/30/90-day views: daily calories vs. goal, average macro split, calories by meal, weight trend, logging streak, days on target and most-logged foods (with a table view of the raw data). Charts by Chart.js, with light and dark themes. |
 | **Profile settings** | Display name, email, time zone (decides when your "today" starts), metric/imperial units, body stats and activity level, Mifflin-St Jeor target suggestions you can apply in one click, manual calorie/macro targets, password change and account deletion. |
 
-It also has a mobile bottom tab bar, a dark mode toggle, account lockout after repeated failed sign-ins, and security headers.
+It also has a mobile bottom tab bar, a dark mode toggle, can be installed to a phone's home screen, locks an account after
+repeated failed sign-ins, and sends security headers.
+
+## Deploying to Vercel
+
+1. Create a Turso database and token with the [Turso CLI](https://docs.turso.tech/cli/introduction):
+
+   ```bash
+   turso db create caloriecopilot
+   turso db show caloriecopilot --url        # libsql://caloriecopilot-<org>.turso.io
+   turso db tokens create caloriecopilot
+   ```
+
+   (Or add the Turso integration from the Vercel Marketplace, which creates
+   the database and sets the variables for you.)
+
+2. Import this repository in Vercel. It's detected as a Next.js project automatically; no build settings are needed.
+
+3. Add these environment variables to the Vercel project (Production, Preview and Development):
+
+   | Variable | Value |
+   |---|---|
+   | `TURSO_DATABASE_URL` | `libsql://caloriecopilot-<org>.turso.io` |
+   | `TURSO_AUTH_TOKEN` | the token from step 1 |
+
+4. Deploy. The schema is created automatically on first request with idempotent `CREATE TABLE IF NOT EXISTS`
+   statements. You can also apply it ahead of time with `npm run db:migrate`.
+
+Use a fresh database. The schema differs from the earlier .NET version of this app.
+
+## Running locally
+
+Requires Node.js 20.9 or later.
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. Without `TURSO_DATABASE_URL`, development uses a local SQLite file (`local.db`), so it runs
+with zero setup. To use Turso locally, copy `.env.example` to `.env.local` and fill it in, or run `turso dev` and set
+`TURSO_DATABASE_URL=http://127.0.0.1:8080`.
+
+A production build (`npm run build && npm start`) requires `TURSO_DATABASE_URL`. For a local test, set it to
+`file:local.db`.
+
+> **Camera access needs a secure context.** Browsers only allow the camera on `https://` or `http://localhost`.
+> To test scanning on a phone, use a Vercel preview deployment or a tunnel such as `ngrok` / `cloudflared`.
+> "Scan from photo" and manual entry work anywhere.
+
+| Script | |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run typecheck` | TypeScript check |
+| `npm run db:migrate` | Apply the schema to `TURSO_DATABASE_URL` (or `local.db`) |
+
+## How it fits together
+
+```
+app/
+├── page.tsx, login/, register/       # landing and sign-in pages
+├── diary/  scan/  analytics/  profile/  # the four main pages (server components + client islands)
+├── actions/                          # server actions: auth, diary, profile, analytics
+└── api/products/[barcode]/route.ts   # barcode lookup used by the scanner
+components/                           # navbar, tab bar, flash messages, calorie ring, form helpers
+lib/
+├── db.ts, schema.ts                  # Turso client (@libsql/client) and schema
+├── auth.ts, password.ts, users.ts    # sessions, scrypt password hashing, user records
+├── food.ts, products.ts, weights.ts  # data access
+├── openfoodfacts.ts                  # barcode -> nutrition lookup
+├── goals.ts                          # Mifflin-St Jeor BMR/TDEE -> calorie & macro targets
+└── validation.ts                     # zod schemas for every form
+proxy.ts                              # redirects signed-out visitors away from protected pages
+public/                               # logo, app icons, web app manifest
+```
+
+**Authentication** is built in, with no third-party auth service:
+- Passwords are hashed with scrypt from Node's built-in `crypto`.
+- Sessions are random tokens in an `HttpOnly`, `SameSite=Lax` cookie. Only a SHA-256 of each token is stored in Turso,
+  so a database leak can't be replayed as cookies.
+- Five failed sign-ins lock the account for 10 minutes.
+- Changing your password signs out every other device.
+- Server actions get Next.js's built-in origin checks against cross-site request forgery.
+
+**Forms** use React server actions with zod validation. Errors are shown next to each field, and your input is kept when
+something needs fixing.
+
+**Product data** comes from Open Food Facts, licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/).
+Lookups go through the server, which caches them for 30 days, so the browser never calls third-party APIs directly.
 
 ## Brand
 
-<img src="src/CalorieCopilot/wwwroot/img/logo.svg" alt="CalorieCopilot logo" width="96" align="right" />
+<img src="public/img/logo.svg" alt="CalorieCopilot logo" width="96" align="right" />
 
 The mark is a fork inside a calorie progress ring, the same ring the diary uses to show what's left for the day.
 
@@ -27,85 +116,6 @@ The mark is a fork inside a calorie progress ring, the same ring the diary uses 
 | Near-black | `#17211F` | Text; dark-mode background |
 | Warm off-white | `#F7F7EF` | Page background; dark-mode text |
 
-The palette is applied by overriding Bootstrap's CSS variables in `wwwroot/css/site.css`, so every component follows it in
-both light and dark mode. All text pairs meet WCAG AA contrast. Macro and meal charts keep a separate colourblind-safe
-categorical palette so protein, carbs and fat stay distinguishable. Icons for browsers, iOS and Android home screens, plus
-a web app manifest, live in `wwwroot/img` and `wwwroot/site.webmanifest`.
-
-## Running locally
-
-Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
-
-```bash
-cd src/CalorieCopilot
-dotnet run
-```
-
-With no Turso settings, the app falls back to a local SQLite file at `src/CalorieCopilot/App_Data/caloriecopilot.db`,
-so it runs with zero setup.
-
-> **Camera access needs a secure context.** Browsers only allow the camera on `https://` or `http://localhost`.
-> To test scanning on a phone, run `dotnet run --launch-profile https` and open the HTTPS URL, or use a tunnel
-> such as `ngrok` / `cloudflared`. "Scan from photo" and manual entry work anywhere.
-
-## Using Turso
-
-1. Create a database and a token with the [Turso CLI](https://docs.turso.tech/cli/introduction):
-
-   ```bash
-   turso db create caloriecopilot
-   turso db show caloriecopilot --url        # libsql://caloriecopilot-<org>.turso.io
-   turso db tokens create caloriecopilot
-   ```
-
-2. Configure the app. In development, use user secrets:
-
-   ```bash
-   cd src/CalorieCopilot
-   dotnet user-secrets set "Database:TursoUrl" "libsql://caloriecopilot-<org>.turso.io"
-   dotnet user-secrets set "Database:TursoAuthToken" "<token>"
-   ```
-
-   In production, use environment variables:
-
-   ```bash
-   Database__TursoUrl=libsql://caloriecopilot-<org>.turso.io
-   Database__TursoAuthToken=<token>
-   ```
-
-   `turso dev` also works for local development (`Database__TursoUrl=http://127.0.0.1:8080`, no token).
-
-The schema is created automatically on startup with idempotent `CREATE TABLE IF NOT EXISTS` statements.
-
-## How it fits together
-
-```
-src/CalorieCopilot
-├── Data/                     # Database access
-│   ├── IDatabase.cs          #   tiny SQL abstraction (positional ? parameters)
-│   ├── TursoDatabase.cs      #   Turso via the Hrana-over-HTTP protocol (POST /v2/pipeline)
-│   ├── SqliteDatabase.cs     #   local SQLite fallback (Microsoft.Data.Sqlite)
-│   ├── DatabaseInitializer.cs#   schema
-│   ├── DatabaseXmlRepository.cs # Data Protection keys stored in the DB
-│   └── *Repository.cs        #   food log, products (barcode cache), weight logs
-├── Identity/
-│   └── DatabaseUserStore.cs  # ASP.NET Core Identity user store on top of IDatabase
-├── Services/
-│   ├── OpenFoodFactsClient.cs   # barcode -> nutrition lookup
-│   ├── ProductLookupService.cs  # cache-first lookup (30-day refresh)
-│   └── GoalCalculator.cs        # Mifflin-St Jeor BMR/TDEE -> calorie & macro targets
-├── Pages/                    # Razor Pages: Diary, Scan, Analytics, Profile, Account/*
-└── wwwroot/                  # site.css, page scripts, vendored Bootstrap, Bootstrap Icons, Chart.js, html5-qrcode
-```
-
-**Why no Entity Framework?** There is no first-party EF Core provider for Turso. Instead, the app talks to Turso's HTTP API
-directly. It is pure managed code with no native libSQL binaries, so it runs anywhere .NET runs, including containers and
-serverless. ASP.NET Core Identity is wired up with a custom `IUserStore` (passwords, email, security stamps, lockout,
-optimistic concurrency) instead of the EF stores. Multi-statement work (schema setup, account deletion) runs as a Hrana
-`batch` with conditional steps, so it commits or rolls back as a unit.
-
-**Data Protection keys** (which sign auth cookies) are kept in the database, so sign-ins survive restarts and work across
-several instances without shared disk.
-
-**Product data** comes from Open Food Facts, licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/).
-Barcode lookups go through the server, which caches them, so the browser never calls third-party APIs directly.
+The palette is applied by overriding Bootstrap's CSS variables in `app/globals.css`, so every component follows it in both
+light and dark mode. All text pairs meet WCAG AA contrast. Macro and meal charts keep a separate colourblind-safe
+categorical palette so protein, carbs and fat stay distinguishable.

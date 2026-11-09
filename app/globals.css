@@ -1,0 +1,253 @@
+/* =====================================================================================
+   Brand palette
+     Forest green  #176653   primary actions, brand
+     Mint          #68D7B2   accent, progress; primary in dark mode
+     Near-black    #17211F   text; dark-mode surface
+     Warm off-white#F7F7EF   page background; text in dark mode
+   Applied by overriding Bootstrap 5.3's CSS variables, so every component follows.
+   ===================================================================================== */
+:root,
+[data-bs-theme="light"] {
+    --cc-forest: #176653;
+    --cc-forest-rgb: 23, 102, 83;
+    --cc-forest-dark: #0F4A3C;
+    --cc-mint: #68D7B2;
+    --cc-mint-rgb: 104, 215, 178;
+    --cc-ink: #17211F;
+    --cc-paper: #F7F7EF;
+
+    --cc-accent: var(--cc-forest);
+    --cc-on-accent: #FFFFFF;
+
+    --bs-body-color: var(--cc-ink);
+    --bs-body-color-rgb: 23, 33, 31;
+    --bs-emphasis-color: var(--cc-ink);
+    --bs-emphasis-color-rgb: 23, 33, 31;
+    --bs-secondary-color: rgba(23, 33, 31, .66);
+    --bs-tertiary-color: rgba(23, 33, 31, .45);
+    --bs-body-bg: #FFFFFF;
+    --bs-secondary-bg: #ECEDE3;
+    --bs-tertiary-bg: var(--cc-paper);
+    --bs-border-color: #E2E3D8;
+    --bs-border-color-translucent: rgba(23, 33, 31, .1);
+
+    --bs-success: var(--cc-forest);
+    --bs-success-rgb: var(--cc-forest-rgb);
+    --bs-success-text-emphasis: #0E3D32;
+    --bs-success-bg-subtle: #E1F7EF;
+    --bs-success-border-subtle: #A4E7D1;
+
+    --bs-link-color: var(--cc-forest);
+    --bs-link-color-rgb: var(--cc-forest-rgb);
+    --bs-link-hover-color: var(--cc-forest-dark);
+    --bs-link-hover-color-rgb: 15, 74, 60;
+    --bs-focus-ring-color: rgba(var(--cc-mint-rgb), .45);
+
+    /* Data-viz roles: categorical slots 1-4 (validated palette); brand series for calories. */
+    --viz-brand: var(--cc-forest);
+    --viz-1: #2a78d6; /* protein / breakfast */
+    --viz-2: #eb6834; /* carbs / lunch */
+    --viz-3: #1baf7a; /* fat / dinner */
+    --viz-4: #eda100; /* snack */
+    --viz-goal: #52514e;
+    --viz-grid: rgba(23, 33, 31, .08);
+    --viz-text: #52514e;
+    --tabbar-h: 64px;
+}
+
+[data-bs-theme="dark"] {
+    --cc-accent: var(--cc-mint);
+    --cc-on-accent: var(--cc-ink);
+
+    --bs-body-color: var(--cc-paper);
+    --bs-body-color-rgb: 247, 247, 239;
+    --bs-emphasis-color: #FFFFFF;
+    --bs-emphasis-color-rgb: 255, 255, 255;
+    --bs-secondary-color: rgba(247, 247, 239, .68);
+    --bs-tertiary-color: rgba(247, 247, 239, .45);
+    --bs-body-bg: #202D2A;
+    --bs-secondary-bg: #2B3A37;
+    --bs-tertiary-bg: var(--cc-ink);
+    --bs-border-color: #33433F;
+    --bs-border-color-translucent: rgba(247, 247, 239, .1);
+
+    --bs-success: var(--cc-mint);
+    --bs-success-rgb: var(--cc-mint-rgb);
+    --bs-success-text-emphasis: #9BE5CC;
+    --bs-success-bg-subtle: #16382F;
+    --bs-success-border-subtle: #1F5E4D;
+
+    --bs-link-color: var(--cc-mint);
+    --bs-link-color-rgb: var(--cc-mint-rgb);
+    --bs-link-hover-color: #9BE5CC;
+    --bs-link-hover-color-rgb: 155, 229, 204;
+
+    --viz-brand: var(--cc-mint);
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
+    --viz-3: #199e70;
+    --viz-4: #c98500;
+    --viz-goal: #c3c2b7;
+    --viz-grid: rgba(247, 247, 239, .1);
+    --viz-text: #c3c2b7;
+}
+
+/* ---- Components that Bootstrap compiles with fixed colours ---- */
+.btn-success {
+    --bs-btn-color: var(--cc-on-accent);
+    --bs-btn-bg: var(--cc-forest);
+    --bs-btn-border-color: var(--cc-forest);
+    --bs-btn-hover-color: var(--cc-on-accent);
+    --bs-btn-hover-bg: #125545;
+    --bs-btn-hover-border-color: #125545;
+    --bs-btn-active-color: var(--cc-on-accent);
+    --bs-btn-active-bg: var(--cc-forest-dark);
+    --bs-btn-active-border-color: var(--cc-forest-dark);
+    --bs-btn-disabled-color: var(--cc-on-accent);
+    --bs-btn-disabled-bg: var(--cc-forest);
+    --bs-btn-disabled-border-color: var(--cc-forest);
+    --bs-btn-focus-shadow-rgb: var(--cc-mint-rgb);
+}
+.btn-outline-success {
+    --bs-btn-color: var(--cc-forest);
+    --bs-btn-border-color: var(--cc-forest);
+    --bs-btn-hover-color: var(--cc-on-accent);
+    --bs-btn-hover-bg: var(--cc-forest);
+    --bs-btn-hover-border-color: var(--cc-forest);
+    --bs-btn-active-color: var(--cc-on-accent);
+    --bs-btn-active-bg: var(--cc-forest);
+    --bs-btn-active-border-color: var(--cc-forest);
+    --bs-btn-disabled-color: var(--cc-forest);
+    --bs-btn-disabled-border-color: var(--cc-forest);
+    --bs-btn-focus-shadow-rgb: var(--cc-mint-rgb);
+}
+[data-bs-theme="dark"] .btn-success {
+    --bs-btn-bg: var(--cc-mint);
+    --bs-btn-border-color: var(--cc-mint);
+    --bs-btn-hover-bg: #86E1C3;
+    --bs-btn-hover-border-color: #86E1C3;
+    --bs-btn-active-bg: #4FC9A0;
+    --bs-btn-active-border-color: #4FC9A0;
+    --bs-btn-disabled-bg: var(--cc-mint);
+    --bs-btn-disabled-border-color: var(--cc-mint);
+}
+[data-bs-theme="dark"] .btn-outline-success {
+    --bs-btn-color: var(--cc-mint);
+    --bs-btn-border-color: var(--cc-mint);
+    --bs-btn-hover-bg: var(--cc-mint);
+    --bs-btn-hover-border-color: var(--cc-mint);
+    --bs-btn-active-bg: var(--cc-mint);
+    --bs-btn-active-border-color: var(--cc-mint);
+    --bs-btn-disabled-color: var(--cc-mint);
+    --bs-btn-disabled-border-color: var(--cc-mint);
+}
+[data-bs-theme="dark"] .btn-light { --bs-btn-bg: var(--bs-secondary-bg); --bs-btn-border-color: var(--bs-border-color); --bs-btn-color: var(--bs-body-color); --bs-btn-hover-bg: #34453F; --bs-btn-hover-color: var(--bs-body-color); }
+
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+    border-color: var(--cc-mint);
+    box-shadow: 0 0 0 .2rem rgba(var(--cc-mint-rgb), .35);
+}
+.btn:focus-visible { box-shadow: 0 0 0 .2rem rgba(var(--cc-mint-rgb), .45); }
+.form-check-input:checked { background-color: var(--cc-accent); border-color: var(--cc-accent); }
+[data-bs-theme="dark"] .form-check-input:checked[type=checkbox] {
+    --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%2317211F' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+.dropdown-menu { --bs-dropdown-link-active-bg: var(--cc-accent); --bs-dropdown-link-active-color: var(--cc-on-accent); }
+.badge.text-bg-light { background-color: var(--bs-tertiary-bg) !important; color: var(--bs-body-color) !important; }
+.table { --bs-table-bg: transparent; }
+
+html { font-size: 15px; }
+@media (min-width: 768px) { html { font-size: 16px; } }
+
+body { background: var(--bs-tertiary-bg); min-height: 100vh; }
+body.has-tabbar main { padding-bottom: calc(var(--tabbar-h) + 1.5rem + env(safe-area-inset-bottom)) !important; }
+@media (min-width: 768px) { body.has-tabbar main { padding-bottom: 2rem !important; } }
+
+/* ---- Brand ---- */
+.brand-logo { border-radius: 22.5%; flex: none; }
+.wordmark { font-weight: 700; letter-spacing: -.01em; color: var(--bs-emphasis-color); }
+.wordmark span { color: var(--cc-accent); }
+.avatar { width: 3.5rem; height: 3.5rem; place-items: center; background: var(--cc-forest); color: var(--cc-paper); box-shadow: inset 0 0 0 3px var(--cc-mint); }
+.navbar { --bs-navbar-active-color: var(--cc-accent); }
+.navbar .nav-link.active { font-weight: 600; }
+
+.card { border: 0; border-radius: 1rem; box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 1px 12px rgba(0, 0, 0, .04); }
+.card-header { background: transparent; border-bottom-color: var(--bs-border-color-translucent); }
+
+
+/* ---- Bottom tab bar (mobile) ---- */
+.tabbar {
+    position: fixed; inset: auto 0 0 0; z-index: 1030;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    color: var(--bs-secondary-color); text-decoration: none; font-size: .72rem;
+}
+.tabbar a i { font-size: 1.35rem; }
+.tabbar a.active { color: var(--cc-accent); font-weight: 600; }
+
+/* ---- Calorie ring ---- */
+.ring { position: relative; width: 168px; height: 168px; flex: none; }
+.ring svg { transform: rotate(-90deg); }
+.ring .track { stroke: var(--bs-secondary-bg); }
+.ring .value { stroke: var(--cc-accent); transition: stroke-dashoffset .6s ease; stroke-linecap: round; }
+.ring.over .value { stroke: var(--bs-danger); }
+.ring .label { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .label .big { font-size: 1.9rem; font-weight: 700; line-height: 1; }
+
+.macro-bar { height: .5rem; border-radius: 1rem; background: var(--bs-secondary-bg); overflow: hidden; }
+.macro-bar > span { display: block; height: 100%; border-radius: 1rem; }
+.swatch { display: inline-block; width: .65rem; height: .65rem; border-radius: 50%; margin-right: .35rem; vertical-align: baseline; }
+.bg-protein { background: var(--viz-1); }
+.bg-carbs { background: var(--viz-2); }
+.bg-fat { background: var(--viz-3); }
+
+/* ---- Diary ---- */
+.meal-card .list-group-item { border-left: 0; border-right: 0; }
+.meal-card .list-group-item:first-child { border-top: 0; }
+.entry-actions .btn { --bs-btn-padding-y: .15rem; --bs-btn-padding-x: .4rem; }
+.recent-chip { white-space: nowrap; }
+
+/* ---- Scanner ---- */
+.scanner-frame {
+    position: relative; overflow: hidden; border-radius: 1rem;
+    background: #000; aspect-ratio: 4 / 3; max-height: 60vh; margin-inline: auto;
+}
+.scanner-frame #reader, .scanner-frame #reader video { width: 100% !important; height: 100% !important; object-fit: cover; }
+.scanner-frame #reader { border: 0 !important; }
+.scanner-overlay {
+    position: absolute; inset: 0; pointer-events: none;
+    display: grid; place-items: center; color: rgba(255, 255, 255, .85);
+}
+.scanner-overlay .target {
+    width: 78%; height: 38%; border: 3px solid rgba(255, 255, 255, .9); border-radius: .75rem;
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .35);
+}
+.scanner-overlay .laser {
+    position: absolute; left: 14%; right: 14%; height: 2px; background: var(--cc-mint);
+    box-shadow: 0 0 8px var(--cc-mint); animation: laser 2s ease-in-out infinite;
+}
+@keyframes laser { 0%, 100% { top: 33%; } 50% { top: 66%; } }
+@media (prefers-reduced-motion: reduce) { .scanner-overlay .laser { animation: none; top: 50%; } }
+.scanner-idle { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; color: #fff; gap: .75rem; }
+.product-thumb { width: 72px; height: 72px; object-fit: contain; border-radius: .5rem; background: #fff; }
+
+/* ---- Analytics ---- */
+.stat-tile .value { font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+.stat-tile .icon { width: 2.5rem; height: 2.5rem; border-radius: .75rem; display: grid; place-items: center; font-size: 1.2rem; }
+.chart-box { position: relative; height: 280px; }
+.chart-box.sm { height: 240px; }
+
+/* ---- Landing ---- */
+.hero { padding: 3rem 0 2rem; }
+.hero h1 { font-weight: 800; letter-spacing: -.02em; }
+.feature-icon { width: 3rem; height: 3rem; border-radius: .9rem; display: grid; place-items: center; font-size: 1.4rem; }
+.auth-card { max-width: 440px; margin-inline: auto; }
+
+/* ---- React-driven modal (no Bootstrap JS) ---- */
+.modal.d-block { background: rgba(0, 0, 0, .45); overflow-y: auto; }
+.dropdown-menu.show { position: absolute; inset: 100% 0 auto auto; margin-top: .25rem; }
+.min-w-0 { min-width: 0; }
