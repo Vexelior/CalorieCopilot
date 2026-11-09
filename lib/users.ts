@@ -143,7 +143,6 @@ export async function deleteUserAndData(userId: string) {
     { sql: 'DELETE FROM FoodEntries WHERE UserId = ?', args: [userId] },
     { sql: 'DELETE FROM WeightLogs WHERE UserId = ?', args: [userId] },
     { sql: 'DELETE FROM Products WHERE OwnerId = ?', args: [userId] },
-    { sql: 'DELETE FROM PhotoEstimates WHERE UserId = ?', args: [userId] },
     { sql: 'DELETE FROM Sessions WHERE UserId = ?', args: [userId] },
     { sql: 'DELETE FROM Users WHERE Id = ?', args: [userId] },
   ]);

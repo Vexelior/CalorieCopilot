@@ -61,7 +61,6 @@ export default async function DiaryPage({ searchParams }: PageProps<'/diary'>) {
 
           <div className="d-grid gap-2 mb-4">
             <Link className="btn btn-success btn-lg" href={`/scan?date=${date}`}><i className="bi bi-upc-scan" /> Scan a barcode</Link>
-            <Link className="btn btn-outline-success" href={`/scan/photo?date=${date}`}><i className="bi bi-camera" /> Estimate from a photo</Link>
             <AddFoodButton className="btn btn-outline-success"><i className="bi bi-plus-lg" /> Add food manually</AddFoodButton>
           </div>
 

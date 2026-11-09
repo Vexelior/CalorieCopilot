@@ -73,10 +73,4 @@ export const SCHEMA: string[] = [
     WeightKg REAL NOT NULL,
     UNIQUE (UserId, LogDate)
   )`,
-  `CREATE TABLE IF NOT EXISTS PhotoEstimates (
-    Id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    UserId    TEXT NOT NULL,
-    CreatedAt TEXT NOT NULL
-  )`,
-  `CREATE INDEX IF NOT EXISTS IX_PhotoEstimates_User_Created ON PhotoEstimates (UserId, CreatedAt)`,
 ];
