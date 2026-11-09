@@ -1,11 +1,15 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
-import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 import { execute, queryOne } from './db';
 
-/** Claude Opus 5.5: strong visual understanding; the server-side fallback covers safety-filter declines. */
-export const PHOTO_MODEL = 'claude-opus-5-5';
+/**
+ * Claude Haiku 5.5: the lowest-cost Claude model ($0.10 / $0.50 per million input/output tokens), roughly a
+ * tenth of a cent per photo. Portion estimates are rougher than the larger models', which is why the UI asks
+ * people to check them. Haiku 5.5 has no server-side refusal fallback, so a declined photo shows a message.
+ */
+export const PHOTO_MODEL = 'claude-haiku-5-5';
 
 /** Photo estimates cost money per request, so each user gets a daily allowance. */
 export const DAILY_LIMIT = Math.max(1, Number(process.env.PHOTO_ESTIMATES_PER_DAY) || 20);
@@ -70,21 +74,19 @@ export async function recordEstimate(userId: string) {
 export async function estimateFoodPhoto(image: { base64: string; mediaType: SupportedImageType }, note: string): Promise<EstimateResult> {
   client ??= new Anthropic({ timeout: 55_000, maxRetries: 1 });
 
-  const content: Anthropic.Beta.BetaContentBlockParam[] = [
+  const content: Anthropic.ContentBlockParam[] = [
     { type: 'image', source: { type: 'base64', media_type: image.mediaType, data: image.base64 } },
   ];
   if (note) content.push({ type: 'text', text: `<note_from_person>\n${note}\n</note_from_person>` });
   content.push({ type: 'text', text: 'Estimate the nutrition of the food in this photo.' });
 
   try {
-    const response = await client.beta.messages.parse({
+    const response = await client.messages.parse({
       model: PHOTO_MODEL,
       max_tokens: 16000,
-      // If a safety classifier declines, the API retries on Anthropic's recommended fallback model.
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
       system: SYSTEM_PROMPT,
-      output_config: { effort: 'medium', format: betaZodOutputFormat(FoodEstimateSchema) },
+      // Haiku 5.5 thinks adaptively; medium (its default) balances accuracy and cost.
+      output_config: { effort: 'medium', format: zodOutputFormat(FoodEstimateSchema) },
       messages: [{ role: 'user', content }],
     });
 

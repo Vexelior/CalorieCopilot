@@ -105,12 +105,14 @@ public/                               # logo, app icons, web app manifest
 **Forms** use React server actions with zod validation. Errors are shown next to each field, and your input is kept when
 something needs fixing.
 
-**Photo estimates** use Claude Opus 5.5 (`claude-opus-5-5`) through the official Anthropic TypeScript SDK (`lib/food-photo.ts`). The
-model returns structured JSON validated against a zod schema, so the app never parses free text. Server-side refusal
-fallback (`fallbacks: "default"`) is on: if a safety filter declines a photo, Anthropic retries on its recommended
-fallback model. Every estimate is a paid API call, roughly 2,000 input tokens for the photo and prompt plus the output, so
-there's a per-user daily limit, and each request is capped at 60 seconds. Estimates are approximate: the UI labels them as
-AI estimates and asks the user to check portions before saving.
+**Photo estimates** use Claude Haiku 5.5 (`claude-haiku-5-5`), the lowest-cost Claude model, through the official
+Anthropic TypeScript SDK (`lib/food-photo.ts`). The model returns structured JSON validated against a zod schema, so the
+app never parses free text. At $0.10 / $0.50 per million input/output tokens, an estimate costs roughly a tenth of a cent
+(a photo plus prompt is a few thousand input tokens; the answer and reasoning a few thousand output tokens). Haiku is
+weaker than the larger Claude models at judging portion sizes, so the UI labels results as AI estimates and asks the user
+to check portions before saving; switching to `claude-sonnet-5-5` or `claude-opus-5-5` is a one-line change in
+`PHOTO_MODEL`. Haiku 5.5 has no server-side refusal fallback, so a photo its safety filters decline shows a message
+instead. There's a per-user daily limit, and each request is capped at 60 seconds.
 
 **Product data** comes from Open Food Facts, licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/).
 Lookups go through the server, which caches them for 30 days, so the browser never calls third-party APIs directly.
