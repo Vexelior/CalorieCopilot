@@ -9,6 +9,7 @@ A calorie-tracking web app built with **Next.js 16 (App Router) and TypeScript**
 |---|---|
 | **Daily diary** | Log breakfast, lunch, dinner and snacks. Shows a calorie ring against your goal, macro progress bars, edit/delete, quick-add from recent foods, "copy from yesterday" and day-by-day navigation. |
 | **Barcode scanning** | Scan packaged food with your phone or laptop camera. Decoding uses the browser's built-in `BarcodeDetector` where there is one (Chrome on Android) and otherwise [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) compiled to WebAssembly, served from the app itself. The camera runs at up to 1080p with 2× zoom where supported, so you can hold the phone far enough away to focus. You can also scan from a photo or type the number; if you leave off the small digits printed beside the bars, the app works them out. Products are looked up in [Open Food Facts](https://world.openfoodfacts.org) and cached. Unknown products can be entered once and are remembered for your next scan. Supports EAN-13/8, UPC-A/E, Code 128 and ITF. |
+| **Photo estimates** | Take or choose a photo of a meal and Claude (Anthropic's AI) lists each food it sees, with an estimated portion, calories and macros, plus a confidence level. Add a note for things the photo can't show ("cooked in butter", "I ate half"). You review and edit the items, untick anything you didn't eat, and add them to the diary in one go. Photos are downscaled in the browser, sent to Anthropic for analysis and not stored by the app. Each user gets a daily allowance (20 by default). |
 | **Analytics** | 7/30/90-day views: daily calories vs. goal, average macro split, calories by meal, weight trend, logging streak, days on target and most-logged foods (with a table view of the raw data). Charts by Chart.js, with light and dark themes. |
 | **Profile settings** | Display name, email, time zone (decides when your "today" starts), metric/imperial units, body stats and activity level, Mifflin-St Jeor target suggestions you can apply in one click, manual calorie/macro targets, password change and account deletion. |
 
@@ -36,6 +37,8 @@ repeated failed sign-ins, and sends security headers.
    |---|---|
    | `TURSO_DATABASE_URL` | `libsql://caloriecopilot-<org>.turso.io` |
    | `TURSO_AUTH_TOKEN` | the token from step 1 |
+   | `ANTHROPIC_API_KEY` | an API key from the [Claude Console](https://platform.claude.com), for photo estimates (optional; the rest of the app works without it) |
+   | `PHOTO_ESTIMATES_PER_DAY` | optional, default `20`: estimates per user per 24 hours |
 
 4. Deploy. The schema is created automatically on first request with idempotent `CREATE TABLE IF NOT EXISTS`
    statements. You can also apply it ahead of time with `npm run db:migrate`.
@@ -83,6 +86,7 @@ lib/
 ├── auth.ts, password.ts, users.ts    # sessions, scrypt password hashing, user records
 ├── food.ts, products.ts, weights.ts  # data access
 ├── barcode.ts, camera-scanner.ts     # check digits / typed-code handling; camera + decoder
+├── food-photo.ts                     # Claude vision: photo -> foods, portions, calories, macros
 ├── openfoodfacts.ts                  # barcode -> nutrition lookup
 ├── goals.ts                          # Mifflin-St Jeor BMR/TDEE -> calorie & macro targets
 └── validation.ts                     # zod schemas for every form
@@ -100,6 +104,13 @@ public/                               # logo, app icons, web app manifest
 
 **Forms** use React server actions with zod validation. Errors are shown next to each field, and your input is kept when
 something needs fixing.
+
+**Photo estimates** use Claude Opus 5.5 (`claude-opus-5-5`) through the official Anthropic TypeScript SDK (`lib/food-photo.ts`). The
+model returns structured JSON validated against a zod schema, so the app never parses free text. Server-side refusal
+fallback (`fallbacks: "default"`) is on: if a safety filter declines a photo, Anthropic retries on its recommended
+fallback model. Every estimate is a paid API call, roughly 2,000 input tokens for the photo and prompt plus the output, so
+there's a per-user daily limit, and each request is capped at 60 seconds. Estimates are approximate: the UI labels them as
+AI estimates and asks the user to check portions before saving.
 
 **Product data** comes from Open Food Facts, licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/1-0/).
 Lookups go through the server, which caches them for 30 days, so the browser never calls third-party APIs directly.

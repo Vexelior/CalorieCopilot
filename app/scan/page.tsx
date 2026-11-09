@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth';
 import { guessMeal, hourIn, isIsoDate, todayIn } from '@/lib/dates';
 import { MEALS, type Meal } from '@/lib/types';
+import { ScanTabs } from '@/components/ScanTabs';
 import { Scanner } from './Scanner';
 
 export const metadata: Metadata = { title: 'Scan barcode' };
@@ -22,6 +23,7 @@ export default async function ScanPage({ searchParams }: PageProps<'/scan'>) {
         </div>
         <Link href={`/diary?date=${date}`} className="btn btn-outline-secondary d-none d-sm-inline-block"><i className="bi bi-arrow-left" /> Diary</Link>
       </div>
+      <ScanTabs active="barcode" date={date} meal={meal} />
       <Scanner date={date} meal={meal} />
     </>
   );

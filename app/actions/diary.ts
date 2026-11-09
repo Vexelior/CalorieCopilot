@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { canonicalBarcode } from '@/lib/barcode';
 import { addDays, isIsoDate } from '@/lib/dates';
 import { setFlash } from '@/lib/flash';
-import { addEntry, deleteEntry, getEntries, getEntry, updateEntry } from '@/lib/food';
+import { addEntries, addEntry, deleteEntry, getEntries, getEntry, updateEntry } from '@/lib/food';
 import { findProduct, upsertProduct } from '@/lib/products';
 import { MEALS, type Meal } from '@/lib/types';
 import { entrySchema, failure, type FormState } from '@/lib/validation';
@@ -100,3 +100,45 @@ export async function addScannedEntry(_prev: FormState | undefined, fd: FormData
   revalidatePath('/diary');
   redirect(`/diary?date=${date}`);
 }
+
+/** Adds the foods a photo estimate found (after the user reviewed and edited them) to the diary. */
+export async function addEstimatedItems(_prev: FormState | undefined, fd: FormData): Promise<FormState> {
+  const user = await userOrRedirect();
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(fd.get('items') ?? '[]'));
+  } catch {
+    return { error: 'Something went wrong reading the items. Please try again.' };
+  }
+  if (!Array.isArray(raw) || raw.length === 0) return { error: 'Tick at least one item to add.' };
+  if (raw.length > 20) return { error: 'Add at most 20 items at a time.' };
+
+  const date = String(fd.get('date') ?? '');
+  const meal = String(fd.get('meal') ?? '');
+  const entries = [];
+  for (const [i, item] of raw.entries()) {
+    const it = (item ?? {}) as Record<string, unknown>;
+    const parsed = entrySchema.safeParse({
+      date, meal, servings: '1',
+      name: String(it.name ?? ''),
+      servingDescription: String(it.portion ?? ''),
+      calories: String(it.calories ?? ''),
+      proteinG: String(it.proteinG ?? ''),
+      carbsG: String(it.carbsG ?? ''),
+      fatG: String(it.fatG ?? ''),
+    });
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      return { error: `Item ${i + 1}: ${first?.message ?? 'invalid values'}` };
+    }
+    const { date: entryDate, id: _id, barcode: _b, ...e } = parsed.data;
+    entries.push({ ...e, entryDate, barcode: null });
+  }
+
+  await addEntries(user.id, entries);
+  const total = Math.round(entries.reduce((s, e) => s + e.calories * e.servings, 0)).toLocaleString('en-US');
+  await setFlash('success', `Added ${entries.length} item${entries.length === 1 ? '' : 's'} (${total} kcal) to ${entries[0].meal.toLowerCase()}.`);
+  revalidatePath('/diary');
+  redirect(`/diary?date=${entries[0].entryDate}`);
+}
+

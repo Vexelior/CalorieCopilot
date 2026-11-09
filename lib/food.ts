@@ -1,5 +1,5 @@
 import 'server-only';
-import { execute, query, queryOne } from './db';
+import { execute, query, queryOne, transaction } from './db';
 import { addDays } from './dates';
 import type { DailyTotals, FoodEntry, Meal, RecentFood, TopFood } from './types';
 import { MEALS } from './types';
@@ -44,6 +44,16 @@ export async function addEntry(userId: string, e: NewEntry) {
       'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [userId, e.entryDate, e.meal, e.name, e.brand, e.barcode, e.servingDescription, e.servings, e.calories, e.proteinG, e.carbsG, e.fatG, new Date().toISOString()],
   );
+}
+
+/** Adds several entries atomically (all or none). */
+export async function addEntries(userId: string, entries: NewEntry[]) {
+  const now = new Date().toISOString();
+  await transaction(entries.map((e) => ({
+    sql: 'INSERT INTO FoodEntries (UserId, EntryDate, Meal, Name, Brand, Barcode, ServingDescription, Servings, Calories, ProteinG, CarbsG, FatG, CreatedAt) ' +
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [userId, e.entryDate, e.meal, e.name, e.brand, e.barcode, e.servingDescription, e.servings, e.calories, e.proteinG, e.carbsG, e.fatG, now],
+  })));
 }
 
 export async function updateEntry(userId: string, id: number, e: Omit<NewEntry, 'barcode'>) {

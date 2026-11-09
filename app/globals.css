@@ -258,3 +258,11 @@ body.has-tabbar main { padding-bottom: calc(var(--tabbar-h) + 1.5rem + env(safe-
 .modal.d-block { background: rgba(0, 0, 0, .45); overflow-y: auto; }
 .dropdown-menu.show { position: absolute; inset: 100% 0 auto auto; margin-top: .25rem; }
 .min-w-0 { min-width: 0; }
+
+/* ---- Scan tabs & photo estimates ---- */
+.scan-tabs .nav-link { color: var(--bs-body-color); border-radius: 2rem; }
+.scan-tabs .nav-link.active { background: var(--cc-accent); color: var(--cc-on-accent); }
+.photo-frame { position: relative; border-radius: 1rem; overflow: hidden; background: var(--bs-secondary-bg); aspect-ratio: 4 / 3; display: grid; place-items: center; }
+.photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+.photo-empty { padding: 1.5rem; max-width: 18rem; }
+.photo-busy { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; color: #fff; background: rgba(23, 33, 31, .6); padding: 1rem; }
