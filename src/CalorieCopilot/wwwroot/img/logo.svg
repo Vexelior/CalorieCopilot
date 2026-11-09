@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="CalorieCopilot">
+  <rect width="512" height="512" rx="116" fill="#176653"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#F7F7EF" stroke-opacity=".16" stroke-width="34"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#68D7B2" stroke-width="34" stroke-linecap="round"
+          stroke-dasharray="678.6 942.5" transform="rotate(-90 256 256)"/>
+  <circle cx="108.8" cy="284.6" r="13" fill="#F7F7EF"/>
+  <g fill="none" stroke="#F7F7EF" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M214 168v62M256 168v62M298 168v62" stroke-width="20"/>
+    <path d="M214 226v14a42 42 0 0 0 84 0v-14" stroke-width="20"/>
+    <path d="M256 284v70" stroke-width="30"/>
+  </g>
+</svg>
