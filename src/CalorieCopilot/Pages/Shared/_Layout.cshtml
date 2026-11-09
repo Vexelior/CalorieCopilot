@@ -9,7 +9,11 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#198754" />
+    <meta name="theme-color" content="#176653" />
+    <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="~/img/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
+    <link rel="manifest" href="~/site.webmanifest" />
     <title>@ViewData["Title"] · CalorieCopilot</title>
     <script>
         // Apply the saved/OS color theme before first paint to avoid a flash.
@@ -28,8 +32,9 @@
 <body class="@(signedIn ? "has-tabbar" : "")">
     <nav class="navbar navbar-expand-md border-bottom bg-body sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" asp-page="/Index">
-                <span class="brand-mark"><i class="bi bi-fire"></i></span> CalorieCopilot
+            <a class="navbar-brand d-flex align-items-center gap-2" asp-page="/Index">
+                <img src="~/img/logo.svg" alt="" class="brand-logo" width="34" height="34" />
+                <span class="wordmark">Calorie<span>Copilot</span></span>
             </a>
             <div class="d-flex align-items-center gap-1 order-md-last">
                 <button type="button" class="btn btn-link nav-link px-2" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">

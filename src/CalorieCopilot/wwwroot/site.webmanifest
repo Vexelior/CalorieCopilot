@@ -1,0 +1,15 @@
+{
+  "name": "CalorieCopilot",
+  "short_name": "CalorieCopilot",
+  "description": "Daily calorie tracking with barcode scanning and analytics.",
+  "start_url": "/Diary",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F7F7EF",
+  "theme_color": "#176653",
+  "icons": [
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

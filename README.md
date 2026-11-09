@@ -14,6 +14,24 @@ A calorie-tracking web app built with **ASP.NET Core (.NET 10) Razor Pages**, **
 
 It also has a mobile bottom tab bar, a dark mode toggle, account lockout after repeated failed sign-ins, and security headers.
 
+## Brand
+
+<img src="src/CalorieCopilot/wwwroot/img/logo.svg" alt="CalorieCopilot logo" width="96" align="right" />
+
+The mark is a fork inside a calorie progress ring, the same ring the diary uses to show what's left for the day.
+
+| Colour | Hex | Used for |
+|---|---|---|
+| Forest green | `#176653` | Brand, primary actions, progress (light mode) |
+| Mint | `#68D7B2` | Accent, focus rings; primary in dark mode |
+| Near-black | `#17211F` | Text; dark-mode background |
+| Warm off-white | `#F7F7EF` | Page background; dark-mode text |
+
+The palette is applied by overriding Bootstrap's CSS variables in `wwwroot/css/site.css`, so every component follows it in
+both light and dark mode. All text pairs meet WCAG AA contrast. Macro and meal charts keep a separate colourblind-safe
+categorical palette so protein, carbs and fat stay distinguishable. Icons for browsers, iOS and Android home screens, plus
+a web app manifest, live in `wwwroot/img` and `wwwroot/site.webmanifest`.
+
 ## Running locally
 
 Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).

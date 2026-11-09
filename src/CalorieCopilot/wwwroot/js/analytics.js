@@ -6,7 +6,7 @@
 
     function palette() {
         return {
-            s1: css('--viz-1'), s2: css('--viz-2'), s3: css('--viz-3'), s4: css('--viz-4'),
+            brand: css('--viz-brand'), s1: css('--viz-1'), s2: css('--viz-2'), s3: css('--viz-3'), s4: css('--viz-4'),
             goal: css('--viz-goal'), grid: css('--viz-grid'), text: css('--viz-text'),
             surface: getComputedStyle(document.body).backgroundColor,
             card: css('--bs-body-bg'),
@@ -44,7 +44,7 @@
                     datasets: [
                         {
                             type: 'bar', label: 'Eaten', data: data.calories,
-                            backgroundColor: c.s1, borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: 'bottom',
+                            backgroundColor: c.brand, borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: 'bottom',
                             maxBarThickness: 28, categoryPercentage: 0.8, barPercentage: 0.9,
                         },
                         {
@@ -137,7 +137,7 @@
                 data: {
                     labels: data.weights.map((w) => w.date),
                     datasets: [{
-                        label: 'Weight', data: values, borderColor: c.s1, backgroundColor: c.s1, borderWidth: 2,
+                        label: 'Weight', data: values, borderColor: c.brand, backgroundColor: c.brand, borderWidth: 2,
                         pointRadius: values.length > 20 ? 0 : 4, pointHoverRadius: 6, pointBorderColor: c.card, pointBorderWidth: 2, tension: 0.25,
                     }],
                 },
