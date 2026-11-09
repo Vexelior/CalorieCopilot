@@ -8,7 +8,7 @@ A calorie-tracking web app built with **Next.js 16 (App Router) and TypeScript**
 | | |
 |---|---|
 | **Daily diary** | Log breakfast, lunch, dinner and snacks. Shows a calorie ring against your goal, macro progress bars, edit/delete, quick-add from recent foods, "copy from yesterday" and day-by-day navigation. |
-| **Barcode scanning** | Scan packaged food with your phone or laptop camera ([html5-qrcode](https://github.com/mebjas/html5-qrcode), using the native `BarcodeDetector` where available). You can also scan from a photo or type the number. Products are looked up in [Open Food Facts](https://world.openfoodfacts.org) and cached. Unknown products can be entered once and are remembered for your next scan. Supports EAN-13/8, UPC-A/E, Code 128 and ITF. |
+| **Barcode scanning** | Scan packaged food with your phone or laptop camera. Decoding uses the browser's built-in `BarcodeDetector` where there is one (Chrome on Android) and otherwise [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) compiled to WebAssembly, served from the app itself. The camera runs at up to 1080p with 2× zoom where supported, so you can hold the phone far enough away to focus. You can also scan from a photo or type the number; if you leave off the small digits printed beside the bars, the app works them out. Products are looked up in [Open Food Facts](https://world.openfoodfacts.org) and cached. Unknown products can be entered once and are remembered for your next scan. Supports EAN-13/8, UPC-A/E, Code 128 and ITF. |
 | **Analytics** | 7/30/90-day views: daily calories vs. goal, average macro split, calories by meal, weight trend, logging streak, days on target and most-logged foods (with a table view of the raw data). Charts by Chart.js, with light and dark themes. |
 | **Profile settings** | Display name, email, time zone (decides when your "today" starts), metric/imperial units, body stats and activity level, Mifflin-St Jeor target suggestions you can apply in one click, manual calorie/macro targets, password change and account deletion. |
 
@@ -82,6 +82,7 @@ lib/
 ├── db.ts, schema.ts                  # Turso client (@libsql/client) and schema
 ├── auth.ts, password.ts, users.ts    # sessions, scrypt password hashing, user records
 ├── food.ts, products.ts, weights.ts  # data access
+├── barcode.ts, camera-scanner.ts     # check digits / typed-code handling; camera + decoder
 ├── openfoodfacts.ts                  # barcode -> nutrition lookup
 ├── goals.ts                          # Mifflin-St Jeor BMR/TDEE -> calorie & macro targets
 └── validation.ts                     # zod schemas for every form

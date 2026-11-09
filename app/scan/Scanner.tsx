@@ -1,10 +1,10 @@
 'use client';
 
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
-import type { Html5Qrcode } from 'html5-qrcode';
 import { addScannedEntry } from '@/app/actions/diary';
 import { FieldError, FormAlert, SubmitButton, fieldClass } from '@/components/forms';
-import { formatBarcode, hasValidCheckDigit, interpretTypedBarcode } from '@/lib/barcode';
+import { formatBarcode, interpretTypedBarcode } from '@/lib/barcode';
+import { CameraScanner, getDetector, scanImage, type CameraFeatures } from '@/lib/camera-scanner';
 import { n0 } from '@/lib/format';
 import { MEALS, type Meal, type ProductDto } from '@/lib/types';
 
@@ -48,15 +48,15 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
   const [manualCode, setManualCode] = useState('');
   const [lookupNote, setLookupNote] = useState('');
   const [showTip, setShowTip] = useState(false);
-  const [cameras, setCameras] = useState<{ id: string }[]>([]);
-  const [torchSupported, setTorchSupported] = useState(false);
+  const [features, setFeatures] = useState<CameraFeatures | null>(null);
   const [torchOn, setTorchOn] = useState(false);
+  const [zoomed, setZoomed] = useState(true);
   const [fields, setFields] = useState<FormFields>({
     barcode: '', name: '', brand: '', servingDescription: '', servings: '1', calories: '', proteinG: '', carbsG: '', fatG: '', meal, saveProduct: true,
   });
 
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const cameraIndex = useRef(-1);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerRef = useRef<CameraScanner | null>(null);
   const handling = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -68,28 +68,17 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
     if (v) setFields((f) => ({ ...f, ...v, meal: (v.meal as Meal) ?? f.meal, saveProduct: v.saveProduct === 'on' }));
   }, [state]);
 
-  const getScanner = useCallback(async () => {
-    if (scannerRef.current) return scannerRef.current;
-    const { Html5Qrcode, Html5QrcodeSupportedFormats: F } = await import('html5-qrcode');
-    scannerRef.current = new Html5Qrcode('reader', {
-      formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.ITF],
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-      verbose: false,
-    });
-    return scannerRef.current;
-  }, []);
-
-  const stopCamera = useCallback(async () => {
-    const s = scannerRef.current;
-    if (s?.isScanning) {
-      try { await s.stop(); } catch { /* already stopped */ }
-    }
+  const stopCamera = useCallback(() => {
+    scannerRef.current?.stop();
     setScanning(false);
     setTorchOn(false);
-    setTorchSupported(false);
+    setFeatures(null);
   }, []);
 
-  useEffect(() => () => { void stopCamera(); }, [stopCamera]);
+  // Start downloading the decoder as soon as the page opens, so the first scan is quick.
+  useEffect(() => { void getDetector().catch(() => {}); }, []);
+
+  useEffect(() => stopCamera, [stopCamera]);
 
   useEffect(() => {
     setShowTip(false);
@@ -155,61 +144,67 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
   }, [showResult]);
 
   const onDetected = useCallback(async (code: string) => {
-    // A failed check digit means a misread; keep scanning rather than look up the wrong product.
-    if (handling.current || !hasValidCheckDigit(code)) return;
+    if (handling.current) return;
     handling.current = true;
     navigator.vibrate?.(80);
-    await stopCamera();
+    stopCamera();
     await lookup(code);
     handling.current = false;
   }, [lookup, stopCamera]);
 
   const startCamera = useCallback(async () => {
     setError('');
-    if (!window.isSecureContext) {
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       setError('Camera access needs HTTPS. Use "Scan from photo" or type the number instead.');
       return;
     }
+    const video = videoRef.current;
+    if (!video) return;
+    scannerRef.current ??= new CameraScanner(video, (code) => { void onDetected(code); });
+    setScanning(true);
     try {
-      const { Html5Qrcode } = await import('html5-qrcode');
-      let list = cameras;
-      if (list.length === 0) {
-        list = await Html5Qrcode.getCameras();
-        setCameras(list);
-      }
-      const scanner = await getScanner();
-      const camera = cameraIndex.current >= 0 && list[cameraIndex.current] ? list[cameraIndex.current].id : { facingMode: 'environment' };
-      await scanner.start(camera, { fps: 12, aspectRatio: 4 / 3, disableFlip: true }, (text) => { void onDetected(text); }, () => {});
-      setScanning(true);
-      try { setTorchSupported(scanner.getRunningTrackCameraCapabilities().torchFeature().isSupported()); } catch { setTorchSupported(false); }
+      const f = await scannerRef.current.start();
+      setFeatures(f);
+      setZoomed(!!f.zoom);
     } catch (err) {
+      if ((err as DOMException)?.name === 'AbortError') return;
       console.warn(err);
-      setError('Could not start the camera. Check browser permissions, or use "Scan from photo".');
+      setScanning(false);
+      setError((err as DOMException)?.name === 'NotAllowedError'
+        ? 'Camera access was blocked. Allow it in your browser settings, or use "Scan from photo".'
+        : 'Could not start the camera. Check browser permissions, or use "Scan from photo".');
     }
-  }, [cameras, getScanner, onDetected]);
+  }, [onDetected]);
 
   const switchCamera = async () => {
-    cameraIndex.current = (cameraIndex.current + 1) % cameras.length;
-    await stopCamera();
+    stopCamera();
+    scannerRef.current?.nextCamera();
     await startCamera();
   };
 
   const toggleTorch = async () => {
     try {
-      await scannerRef.current?.getRunningTrackCameraCapabilities().torchFeature().apply(!torchOn);
+      await scannerRef.current?.setTorch(!torchOn);
       setTorchOn(!torchOn);
     } catch { setError('Torch is not available on this camera.'); }
   };
 
+  const toggleZoom = async () => {
+    if (!features?.zoom) return;
+    await scannerRef.current?.setZoom(zoomed ? features.zoom.min : Math.min(2, features.zoom.max));
+    setZoomed(!zoomed);
+  };
+
   const scanFile = async (file: File) => {
     setError('');
-    await stopCamera();
+    stopCamera();
     try {
-      const scanner = await getScanner();
-      await lookup(await scanner.scanFile(file, false));
-    } catch {
-      setError(`No barcode found in that photo. ${SCAN_TIPS} Or type the number below.`);
+      const code = await scanImage(file);
+      if (code) return void (await lookup(code));
+    } catch (err) {
+      console.warn(err);
     }
+    setError(`No barcode found in that photo. ${SCAN_TIPS} Or type the number below.`);
   };
 
   const onManual = async (e: React.FormEvent) => {
@@ -229,7 +224,7 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
       <div className="col-lg-6">
         <div className="card p-3">
           <div className="scanner-frame w-100">
-            <div id="reader" />
+            <video ref={videoRef} id="reader" className={scanning ? '' : 'd-none'} playsInline muted aria-label="Camera preview" />
             {scanning && <div className="scanner-overlay" id="scanner-overlay"><div className="target" /><div className="laser" /></div>}
             {!scanning && (
               <div className="scanner-idle" id="scanner-idle">
@@ -240,9 +235,14 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
             )}
           </div>
           <div className="d-flex flex-wrap gap-2 mt-3">
-            {scanning && <button type="button" className="btn btn-outline-secondary" onClick={() => void stopCamera()}><i className="bi bi-stop-circle" /> Stop</button>}
-            {scanning && cameras.length > 1 && <button type="button" className="btn btn-outline-secondary" onClick={() => void switchCamera()}><i className="bi bi-arrow-repeat" /> Switch camera</button>}
-            {scanning && torchSupported && <button type="button" className={`btn btn-outline-secondary ${torchOn ? 'active' : ''}`} onClick={() => void toggleTorch()}><i className="bi bi-lightbulb" /> Torch</button>}
+            {scanning && <button type="button" className="btn btn-outline-secondary" onClick={stopCamera}><i className="bi bi-stop-circle" /> Stop</button>}
+            {scanning && features?.zoom && (
+              <button type="button" className={`btn btn-outline-secondary ${zoomed ? 'active' : ''}`} onClick={() => void toggleZoom()} aria-pressed={zoomed} title="Zoom in so you can hold the phone further back">
+                <i className="bi bi-zoom-in" /> {zoomed ? '2×' : '1×'}
+              </button>
+            )}
+            {scanning && (features?.cameras ?? 0) > 1 && <button type="button" className="btn btn-outline-secondary" onClick={() => void switchCamera()}><i className="bi bi-arrow-repeat" /> Switch camera</button>}
+            {scanning && features?.torch && <button type="button" className={`btn btn-outline-secondary ${torchOn ? 'active' : ''}`} onClick={() => void toggleTorch()}><i className="bi bi-lightbulb" /> Torch</button>}
             <label className="btn btn-outline-secondary mb-0 ms-auto">
               <i className="bi bi-image" /> Scan from photo
               <input type="file" accept="image/*" capture="environment" id="scan-file" className="d-none"

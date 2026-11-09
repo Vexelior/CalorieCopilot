@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Daily calorie tracking with barcode scanning and analytics. Next.js + Turso + Bootstrap.",
   "scripts": {
+    "predev": "node scripts/copy-wasm.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-wasm.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
@@ -16,10 +18,10 @@
   },
   "dependencies": {
     "@libsql/client": "0.18.0",
+    "barcode-detector": "3.2.3",
     "bootstrap": "5.3.8",
     "bootstrap-icons": "1.13.2",
     "chart.js": "4.6.1",
-    "html5-qrcode": "2.3.8",
     "next": "16.4.3",
     "react": "19.3.1",
     "react-dom": "19.3.1",
