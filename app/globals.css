@@ -159,7 +159,14 @@
 html { font-size: 15px; }
 @media (min-width: 768px) { html { font-size: 16px; } }
 
-body { background: var(--bs-tertiary-bg); min-height: 100vh; }
+body {
+    background: var(--bs-tertiary-bg);
+    min-height: 100vh;
+    /* Long unbroken strings (emails, product names) wrap instead of widening the page. */
+    overflow-wrap: break-word;
+    /* Safety net against sideways scrolling on phones. 'clip' (unlike 'hidden') keeps the sticky navbar working. */
+    overflow-x: clip;
+}
 body.has-tabbar main { padding-bottom: calc(var(--tabbar-h) + 1.5rem + env(safe-area-inset-bottom)) !important; }
 @media (min-width: 768px) { body.has-tabbar main { padding-bottom: 2rem !important; } }
 

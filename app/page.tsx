@@ -16,7 +16,7 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero">
-        <div className="row align-items-center g-5">
+        <div className="row align-items-center g-4 g-lg-5">
           <div className="col-lg-6">
             <span className="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle mb-3"><i className="bi bi-stars" /> Free and private</span>
             <h1 className="display-5 mb-3">Your copilot for <span className="text-success">daily nutrition</span>.</h1>
