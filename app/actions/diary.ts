@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { canonicalBarcode } from '@/lib/barcode';
 import { addDays, isIsoDate } from '@/lib/dates';
 import { setFlash } from '@/lib/flash';
 import { addEntry, deleteEntry, getEntries, getEntry, updateEntry } from '@/lib/food';
@@ -69,7 +70,8 @@ export async function addScannedEntry(_prev: FormState | undefined, fd: FormData
   const user = await userOrRedirect();
   const parsed = entrySchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return failure(parsed.error, fd);
-  const { date, barcode, id: _id, ...e } = parsed.data;
+  const { date, barcode: scanned, id: _id, ...e } = parsed.data;
+  const barcode = scanned ? canonicalBarcode(scanned) : undefined;
 
   if (fd.get('saveProduct') === 'on' && barcode && !(await findProduct(barcode, user.id))) {
     await upsertProduct({

@@ -4,6 +4,7 @@ import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import type { Html5Qrcode } from 'html5-qrcode';
 import { addScannedEntry } from '@/app/actions/diary';
 import { FieldError, FormAlert, SubmitButton, fieldClass } from '@/components/forms';
+import { formatBarcode, hasValidCheckDigit, interpretTypedBarcode } from '@/lib/barcode';
 import { n0 } from '@/lib/format';
 import { MEALS, type Meal, type ProductDto } from '@/lib/types';
 
@@ -18,15 +19,10 @@ interface FormFields {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const fmt = (n: number | null | undefined) => (n == null ? '' : String(round1(n)));
 
-/** Validates the GS1 check digit for EAN-8, UPC-A (12), EAN-13 and GTIN-14. */
-function validGtin(code: string) {
-  if (!/^\d+$/.test(code)) return false;
-  if (![8, 12, 13, 14].includes(code.length)) return code.length >= 6 && code.length <= 14;
-  const digits = code.split('').map(Number);
-  const check = digits.pop()!;
-  const sum = digits.reverse().reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 3 : 1), 0);
-  return (10 - (sum % 10)) % 10 === check;
-}
+/** How long the camera can run without a read before we show scanning tips. */
+const TIP_DELAY_MS = 7000;
+
+const SCAN_TIPS = 'Flatten the packaging so the bars are straight, tilt it to get rid of glare, and hold the phone 15-20 cm away so it can focus.';
 
 function perServing(p: ProductDto) {
   const g = p.servingGrams;
@@ -50,6 +46,8 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
   const [product, setProduct] = useState<ProductDto | null>(null);
   const [basis, setBasis] = useState<Basis>('serving');
   const [manualCode, setManualCode] = useState('');
+  const [lookupNote, setLookupNote] = useState('');
+  const [showTip, setShowTip] = useState(false);
   const [cameras, setCameras] = useState<{ id: string }[]>([]);
   const [torchSupported, setTorchSupported] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
@@ -93,6 +91,13 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
 
   useEffect(() => () => { void stopCamera(); }, [stopCamera]);
 
+  useEffect(() => {
+    setShowTip(false);
+    if (!scanning) return;
+    const timer = setTimeout(() => setShowTip(true), TIP_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [scanning]);
+
   const applyBasis = useCallback((p: ProductDto, b: Basis) => {
     if (b === 'serving') {
       const s = perServing(p)!;
@@ -127,14 +132,21 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
     });
   }, [applyBasis]);
 
-  const lookup = useCallback(async (code: string) => {
+  const lookup = useCallback(async (code: string, note = '') => {
+    setLookupNote(note);
     setPhase('loading');
     setLoadingCode(code);
     try {
       const res = await fetch(`/api/products/${encodeURIComponent(code)}`, { headers: { Accept: 'application/json' } });
       if (res.status === 401) { window.location.href = '/login?returnUrl=/scan'; return; }
-      if (res.ok) return showResult(code, (await res.json()) as ProductDto);
-      if (res.status === 404) return showResult(code, null);
+      if (res.ok) {
+        const product = (await res.json()) as ProductDto;
+        return showResult(product.barcode || code, product);
+      }
+      if (res.status === 404) {
+        const body = (await res.json().catch(() => ({}))) as { barcode?: string };
+        return showResult(body.barcode || code, null);
+      }
       throw new Error(`HTTP ${res.status}`);
     } catch {
       setPhase('empty');
@@ -143,7 +155,8 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
   }, [showResult]);
 
   const onDetected = useCallback(async (code: string) => {
-    if (handling.current || !validGtin(code)) return;
+    // A failed check digit means a misread; keep scanning rather than look up the wrong product.
+    if (handling.current || !hasValidCheckDigit(code)) return;
     handling.current = true;
     navigator.vibrate?.(80);
     await stopCamera();
@@ -195,17 +208,17 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
       const scanner = await getScanner();
       await lookup(await scanner.scanFile(file, false));
     } catch {
-      setError('No barcode found in that photo. Try again with the barcode filling more of the frame.');
+      setError(`No barcode found in that photo. ${SCAN_TIPS} Or type the number below.`);
     }
   };
 
   const onManual = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = manualCode.replace(/\s+/g, '');
-    if (!/^\d{6,14}$/.test(code)) { setError('Barcodes are 6-14 digits.'); return; }
+    const typed = interpretTypedBarcode(manualCode);
+    if (!typed.ok) { setError(typed.error); return; }
     setError('');
     await stopCamera();
-    await lookup(code);
+    await lookup(typed.code, typed.note);
   };
 
   const hasBoth = !!product && perServing(product) != null && product.caloriesPer100g != null;
@@ -236,14 +249,21 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
                 onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void scanFile(f); }} />
             </label>
           </div>
+          {showTip && !error && (
+            <div className="alert alert-info small mt-3 mb-0 d-flex gap-2" id="scan-tip" role="status">
+              <i className="bi bi-lightbulb" aria-hidden="true" />
+              <div><strong>Can&apos;t get a read?</strong> {SCAN_TIPS} You can also type the number below, including the small digits at each end.</div>
+            </div>
+          )}
           <div className="text-danger small mt-2" id="scan-error" role="alert">{error}</div>
           <hr />
           <form id="manual-form" className="input-group" autoComplete="off" onSubmit={onManual}>
             <span className="input-group-text"><i className="bi bi-upc" /></span>
-            <input type="text" inputMode="numeric" pattern="\d{6,14}" className="form-control" id="manual-code" placeholder="Or type the barcode number"
-              aria-label="Barcode number" required value={manualCode} onChange={(e) => setManualCode(e.target.value)} />
+            <input type="text" inputMode="numeric" className="form-control" id="manual-code" placeholder="Or type the barcode number"
+              aria-label="Barcode number" aria-describedby="manual-help" required value={manualCode} onChange={(e) => setManualCode(e.target.value)} />
             <button className="btn btn-success" type="submit">Look up</button>
           </form>
+          <div className="form-text" id="manual-help">Include the small digits at each end if there are any. If you leave them off, we&apos;ll work them out.</div>
         </div>
       </div>
 
@@ -271,12 +291,13 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
                 )}
                 <div className="min-w-0">
                   <div className="small text-body-secondary">
-                    <i className="bi bi-upc" /> <span id="product-code">{fields.barcode}</span>{' '}
+                    <i className="bi bi-upc" /> <span id="product-code">{formatBarcode(fields.barcode)}</span>{' '}
                     <span id="product-source" className="badge text-bg-light border ms-1">{product ? (product.isCustom ? 'Saved by you' : 'Open Food Facts') : 'Not found'}</span>
                   </div>
                   <div className="fw-semibold fs-5 text-truncate" id="product-title">{product?.name ?? 'Unknown product'}</div>
                 </div>
               </div>
+              {lookupNote && <div className="small text-body-secondary mb-3" id="lookup-note"><i className="bi bi-info-circle" /> {lookupNote}</div>}
               {!product && (
                 <div className="alert alert-warning small" id="not-found">
                   <i className="bi bi-question-circle" /> This product isn&apos;t in the database yet. Enter its nutrition label below. We&apos;ll remember it for your next scan.
@@ -360,7 +381,7 @@ export function Scanner({ date, meal }: { date: string; meal: Meal }) {
             <div className="card-footer bg-transparent d-flex align-items-center justify-content-between py-3">
               <div><span className="text-body-secondary small">Total</span> <span className="fs-4 fw-bold" id="scan-total">{n0(total)}</span> <span className="text-body-secondary">kcal</span></div>
               <div className="d-flex gap-2">
-                <button type="button" className="btn btn-outline-secondary" id="scan-again" onClick={() => { setPhase('empty'); void startCamera(); }}>
+                <button type="button" className="btn btn-outline-secondary" id="scan-again" onClick={() => { setPhase('empty'); setLookupNote(''); void startCamera(); }}>
                   <i className="bi bi-arrow-counterclockwise" /> Rescan
                 </button>
                 <SubmitButton><i className="bi bi-plus-lg" /> Add to diary</SubmitButton>
