@@ -50,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user ? (
           <TabBar />
         ) : (
-          <footer className="border-top py-4 text-body-secondary small">
+          <footer className="site-footer py-4 mt-5">
             <div className="container d-flex flex-wrap justify-content-between gap-2">
               <span>&copy; {new Date().getFullYear()} CalorieCopilot</span>
               <span>

@@ -15,10 +15,10 @@ export const NAV_ITEMS = [
 export function NavBar({ signedIn }: { signedIn: boolean }) {
   const pathname = usePathname();
   return (
-    <nav className="navbar navbar-expand-md border-bottom bg-body sticky-top">
+    <nav className="navbar navbar-expand-md app-nav sticky-top">
       <div className="container">
         <Link className="navbar-brand d-flex align-items-center gap-2" href={signedIn ? '/diary' : '/'}>
-          <img src="/img/logo.svg" alt="" className="brand-logo" width={34} height={34} />
+          <img src="/img/logo.svg" alt="" className="brand-logo" width={30} height={30} />
           <span className="wordmark">Calorie<span>Copilot</span></span>
         </Link>
         <div className="d-flex align-items-center gap-1 order-md-last">
@@ -30,7 +30,7 @@ export function NavBar({ signedIn }: { signedIn: boolean }) {
           )}
         </div>
         {signedIn ? (
-          <ul className="navbar-nav me-auto ms-md-4 d-none d-md-flex flex-row gap-md-1">
+          <ul className="navbar-nav mx-auto d-none d-md-flex flex-row gap-md-1">
             {NAV_ITEMS.map((item) => (
               <li className="nav-item" key={item.href}>
                 <Link className={`nav-link ${pathname.startsWith(item.href) ? 'active' : ''}`} href={item.href}
@@ -42,7 +42,7 @@ export function NavBar({ signedIn }: { signedIn: boolean }) {
           </ul>
         ) : (
           <div className="ms-auto d-flex gap-2 me-1">
-            <Link className="btn btn-outline-success btn-sm" href="/login">Sign in</Link>
+            <Link className="btn btn-link btn-sm text-body text-decoration-none" href="/login">Sign in</Link>
             <Link className="btn btn-success btn-sm" href="/register">Get started</Link>
           </div>
         )}

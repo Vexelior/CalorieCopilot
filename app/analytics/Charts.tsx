@@ -21,7 +21,7 @@ function palette() {
   const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return {
     brand: css('--viz-brand'), s1: css('--viz-1'), s2: css('--viz-2'), s3: css('--viz-3'), s4: css('--viz-4'),
-    goal: css('--viz-goal'), grid: css('--viz-grid'), text: css('--viz-text'), card: css('--bs-body-bg'),
+    goal: css('--viz-goal'), grid: css('--viz-grid'), text: css('--viz-text'), card: css('--cc-surface'),
   };
 }
 

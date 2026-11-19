@@ -8,7 +8,7 @@ import { NAV_ITEMS } from './NavBar';
 export function TabBar() {
   const pathname = usePathname();
   return (
-    <nav className="tabbar d-md-none border-top bg-body" aria-label="Primary">
+    <nav className="tabbar d-md-none" aria-label="Primary">
       {NAV_ITEMS.map((item) => (
         <Link key={item.href} href={item.href} className={pathname.startsWith(item.href) ? 'active' : ''}
           aria-current={pathname.startsWith(item.href) ? 'page' : undefined}>
